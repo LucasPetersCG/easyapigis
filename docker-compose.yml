@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Serviço de Banco de Dados Espacial
+  # Serviço de Banco de Dados (Mantenha este igual)
   db:
     image: postgis/postgis:16-3.4-alpine
     container_name: easyapigis_db
@@ -17,8 +17,20 @@ services:
     networks:
       - easyapi_net
 
-  # O Backend será configurado no próximo passo, mas já deixamos o placeholder
-  # O Frontend será configurado no próximo passo
+  # NOVO: Serviço Backend
+  backend:
+    build: ./backend
+    container_name: easyapigis_backend
+    volumes:
+      - ./backend/app:/app/app # Hot-reload no Windows funciona bem aqui
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/easyapigis_db
+    depends_on:
+      - db
+    networks:
+      - easyapi_net
 
 volumes:
   postgres_data:
