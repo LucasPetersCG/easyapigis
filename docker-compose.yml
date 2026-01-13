@@ -1,5 +1,5 @@
 services:
-  # Serviço de Banco de Dados
+  # 1. Banco de Dados
   db:
     image: postgis/postgis:16-3.4-alpine
     container_name: easyapigis_db
@@ -15,7 +15,7 @@ services:
     networks:
       - easyapi_net
 
-  # Serviço Backend
+  # 2. Backend
   backend:
     build: ./backend
     container_name: easyapigis_backend
@@ -29,6 +29,25 @@ services:
       - DATABASE_URL=postgresql://user:password@db:5432/easyapigis_db
     depends_on:
       - db
+    networks:
+      - easyapi_net
+
+  # 3. Frontend (Deve estar alinhado com 'backend' e 'db')
+  frontend:
+    build: ./frontend
+    container_name: easyapigis_frontend
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.ts:/app/vite.config.ts
+      - ./frontend/tailwind.config.js:/app/tailwind.config.js
+      - ./frontend/postcss.config.js:/app/postcss.config.js
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
     networks:
       - easyapi_net
 
