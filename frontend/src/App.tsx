@@ -12,6 +12,7 @@ function App() {
   const [rawData, setRawData] = useState<any>(null);
   const [schema, setSchema] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [token, setToken] = useState(''); // Novo state para o token
 
   const handleProcess = async () => {
     if (!url) return;
@@ -23,7 +24,14 @@ function App() {
     try {
       // Passo 1: Buscar Dados (Proxy)
       setStep('FETCHING');
-      const fetchResponse = await axios.get(`${API_URL}/fetch`, { params: { url } });
+
+      // Configuração dos headers para o nosso Backend
+      const config = {
+        params: { url },
+        headers: token ? { 'x-proxy-auth': token } : {} // Envia o token se existir
+      };
+      
+      const fetchResponse = await axios.get(`${API_URL}/fetch`, config);
       
       // Lógica de Amostragem: Pega o primeiro item ou feature
       let sample = fetchResponse.data;
@@ -48,8 +56,10 @@ function App() {
   };
 
   return (
+    // 1. Container Principal (RESTAUROU ISSO)
     <div className="min-h-screen p-4 md:p-8 font-sans max-w-7xl mx-auto selection:bg-blue-500/30">
-      {/* Header */}
+      
+      {/* 2. Header (RESTAUROU ISSO) */}
       <header className="mb-12 text-center animate-fade-in-down">
         <div className="inline-flex items-center justify-center p-3 bg-blue-600/10 rounded-full mb-4 ring-1 ring-blue-500/30 shadow-lg shadow-blue-500/10">
           <Map className="w-8 h-8 text-blue-400" />
@@ -62,28 +72,48 @@ function App() {
         </p>
       </header>
 
-      {/* Input Section */}
-      <div className="max-w-2xl mx-auto mb-12">
-        <div className="bg-slate-800/50 p-2 rounded-xl border border-slate-700 flex shadow-2xl backdrop-blur-sm transition-all focus-within:border-blue-500/50 focus-within:ring-2 focus-within:ring-blue-500/20">
-          <input 
-            type="text" 
-            placeholder="Cole a URL da API Geoespacial aqui (JSON/GeoJSON)..."
-            className="flex-1 bg-transparent border-none outline-none text-white px-4 placeholder:text-slate-500 w-full"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleProcess()}
-          />
-          <button 
+      {/* 3. Input Section (SEU CÓDIGO NOVO DE AUTH) */}
+      <div className="max-w-2xl mx-auto mb-12 space-y-4">
+        
+        {/* Container dos Inputs */}
+        <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 shadow-2xl backdrop-blur-sm flex flex-col gap-4">
+          
+          {/* Linha 1: URL */}
+          <div className="flex items-center gap-2 border-b border-slate-700/50 pb-2">
+            <span className="text-xs font-bold text-slate-500 w-16">URL</span>
+            <input 
+              type="text" 
+              placeholder="https://api.exemplo.com/dados.json"
+              className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-slate-600"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+            />
+          </div>
+
+          {/* Linha 2: Token (Novo) */}
+          <div className="flex items-center gap-2">
+             <span className="text-xs font-bold text-slate-500 w-16">AUTH</span>
+             <input 
+              type="text" 
+              placeholder="Ex: Token token=3a7a31... (Opcional)"
+              className="flex-1 bg-transparent border-none outline-none text-blue-200 placeholder:text-slate-600 font-mono text-sm"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Botão de Ação */}
+        <button 
             onClick={handleProcess}
             disabled={loading || !url}
-            className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-600/20"
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-600/20"
           >
             {loading ? <Loader2 className="animate-spin w-5 h-5" /> : <Zap className="w-5 h-5 fill-current" />}
-            <span className="hidden sm:inline">
-              {step === 'FETCHING' ? 'Baixando...' : step === 'INFERRING' ? 'Analisando...' : 'Processar'}
+            <span className="">
+              {step === 'FETCHING' ? 'Baixando...' : step === 'INFERRING' ? 'Analisando...' : 'Processar API'}
             </span>
-          </button>
-        </div>
+        </button>
         
         {/* Sugestão de URL para teste */}
         <div className="mt-4 text-center">
@@ -107,7 +137,7 @@ function App() {
         )}
       </div>
 
-      {/* Results Grid */}
+      {/* 4. Results Grid (SEU CÓDIGO ANTIGO MANTIDO) */}
       {(rawData || schema) && (
         <div className="grid lg:grid-cols-2 gap-8 animate-fade-in">
           {/* Coluna 1: Raw Data */}

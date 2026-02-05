@@ -1,6 +1,6 @@
 import duckdb
 import requests
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any
@@ -62,15 +62,29 @@ def health_check():
         }
 
 # 4. Novo Endpoint Proxy (CRÍTICO PARA BAIXAR DADOS)
+# Atualize o endpoint /fetch
 @app.get("/fetch")
-def fetch_external_url(url: str):
+def fetch_external_url(
+    url: str, 
+    # Aceita um header opcional chamado 'x-proxy-auth'
+    x_proxy_auth: str | None = Header(default=None) 
+):
     """
-    Baixa o JSON de uma URL externa (evita bloqueio CORS do navegador).
+    Baixa o JSON de uma URL externa.
+    Se o header 'x-proxy-auth' for enviado, ele é repassado como 'Authorization'.
     """
     try:
-        # Timeout de 10s para segurança
-        response = requests.get(url, timeout=10)
-        response.raise_for_status() # Levanta erro se for 404/500
+        # Prepara os headers para a API de destino
+        target_headers = {}
+        if x_proxy_auth:
+            target_headers['Authorization'] = x_proxy_auth
+        
+        # Faz a requisição repassando os headers
+        # Adicionei um User-Agent genérico pois algumas APIs bloqueiam requests sem ele
+        target_headers['User-Agent'] = 'EasyAPIGIS/1.0'
+        
+        response = requests.get(url, headers=target_headers, timeout=10)
+        response.raise_for_status()
         return response.json()
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Erro ao buscar URL: {str(e)}")
